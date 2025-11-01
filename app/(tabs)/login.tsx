@@ -1,231 +1,121 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useAuth } from '../context/AuthContext';
-// Color used for button text and activity indicator for consistent contrast
-const BUTTON_TEXT_COLOR = '#ffffff';
+import { useAuth } from '@/context/auth-context';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import React, { useState } from 'react';
+import { ActivityIndicator, Button, StyleSheet, TextInput, View } from 'react-native';
+// (1) 'useColorScheme' ya no es necesario aquí, lo borramos.
 
-export default function Login() {
-	const router = useRouter();
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const passwordRef = useRef<TextInput | null>(null);
-	const [showPassword, setShowPassword] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState('');
+export default function LoginScreen() {
+  const [email, setEmail] = useState('test');
+  const [password, setPassword] = useState('test');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
-	const validate = () => {
-		setError('');
-		const emailRegex = /^\S+@\S+\.\S+$/;
-		if (!emailRegex.test(email)) {
-			setError('Por favor ingresa un email válido.');
-			return false;
-		}
-		if (!password || password.length === 0) {
-			setError('Ingresa la contraseña.');
-			return false;
-		}
-		return true;
-	};
+  // Obtenemos colores del tema para los estilos
+  const tintColor = useThemeColor({}, 'tint');
+  const inputBg = useThemeColor({ light: '#FFFFFF', dark: '#2C2C2E' }, 'background');
+  const inputBorder = useThemeColor({ light: '#C7C7CC', dark: '#545458' }, 'icon');
+  const inputText = useThemeColor({}, 'text');
+  const placeholderText = useThemeColor({}, 'icon');
 
-	const { setEmail: setAuthEmail } = useAuth();
+  const handleLogin = async () => {
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+    setError(null);
 
-	const onLoginPress = () => {
-		if (!validate()) return;
+    const response = await login(email, password);
 
-		// Validación adicional: contraseña correcta
-		if (password !== '1234') {
-			setError('Contraseña incorrecta');
-			return;
-		}
+    if (!response.success) {
+      setError(response.error || 'Error desconocido');
+      setIsLoggingIn(false);
+    }
+  };
 
-		setLoading(true);
-		// Navegar a la vista principal (reemplaza la ruta actual)
-		setTimeout(() => {
-			setLoading(false);
-			// Guardar email en contexto para que otras pestañas (Perfil) puedan leerlo
-			setAuthEmail(email);
-			setEmail('');
-			setPassword('');
-			// Reemplazamos la ruta por la pantalla principal del layout de tabs
-			(router as any).replace('/');
-		}, 600);
-	};
+  // (2) ¡Añadimos 'const' aquí!
+  const dynamicInputStyle = [
+    styles.input,
+    {
+      backgroundColor: inputBg,
+      borderColor: inputBorder,
+      color: inputText,
+    },
+  ];
 
-	const isDisabled = loading || email.length === 0 || password.length === 0;
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText type="title" style={styles.title}>Bienvenido</ThemedText>
+      {/* (3) Corrección: Envolver la cadena en { } y usar comillas simples */}
+      <ThemedText style={styles.subtitle}>{'Usa "test" / "test" para ingresar.'}</ThemedText>
+      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={dynamicInputStyle}
+          placeholder="Email (test)"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholderTextColor={placeholderText}
+        />
+      </View>
 
-	return (
-		<ThemedView style={styles.container}>
-			<View style={styles.card}>
-				<ThemedText type="title" style={styles.title}>
-					Iniciar sesión
-				</ThemedText>
-				<View style={styles.field}>
-					<ThemedText style={styles.label}>Email</ThemedText>
-					<TextInput
-						style={styles.input}
-						placeholder="tu@correo.com"
-						placeholderTextColor="#8e8e93"
-						keyboardType="email-address"
-						autoCapitalize="none"
-						value={email}
-						onChangeText={text => {
-							setEmail(text);
-							if (error) setError('');
-						}}
-						returnKeyType="next"
-						onSubmitEditing={() => passwordRef.current?.focus()}
-						editable={!loading}
-						accessibilityLabel="Email"
-					/>
-				</View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={dynamicInputStyle}
+          placeholder="Contraseña (test)"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholderTextColor={placeholderText}
+        />
+      </View>
 
-					<View style={styles.field}>
-						<ThemedText style={styles.label}>Contraseña</ThemedText>
-						<View style={styles.row}>
-							<TextInput
-								style={[styles.input, styles.inputWithButton]}
-								placeholder="Contraseña"
-								placeholderTextColor="#8e8e93"
-								secureTextEntry={!showPassword}
-								ref={passwordRef}
-								value={password}
-								onChangeText={text => {
-									setPassword(text);
-									if (error) setError('');
-								}}
-								editable={!loading}
-								accessibilityLabel="Contraseña"
-							/>
-							<Pressable
-								onPress={() => setShowPassword(v => !v)}
-								style={styles.eyeButton}
-								accessibilityRole="button"
-								accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-							>
-								<MaterialIcons
-									name={showPassword ? 'visibility' : 'visibility-off'}
-									size={20}
-									color={styles.eyeText.color}
-								/>
-							</Pressable>
-						</View>
-					</View>
+      {error && (
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+      )}
 
-						{error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
-						{/** Hint: demo password info */}
-						<ThemedText style={styles.hint}>Demo: usa la contraseña 1234 para entrar</ThemedText>
-
-							<Pressable
-								onPress={onLoginPress}
-								style={({ pressed }) => [
-									styles.button,
-									isDisabled ? styles.buttonDisabled : null,
-									pressed ? styles.buttonPressed : null,
-								]}
-								disabled={isDisabled}
-								accessibilityRole="button"
-								accessibilityLabel="Iniciar sesión"
-								accessibilityState={{ disabled: isDisabled }}
-								testID="login-button"
-								hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-								android_ripple={{ color: 'rgba(255,255,255,0.12)' }}
-							>
-								{loading ? (
-									<ActivityIndicator color={BUTTON_TEXT_COLOR} />
-								) : (
-									<ThemedText style={styles.buttonText}>Entrar</ThemedText>
-								)}
-							</Pressable>
-			</View>
-		</ThemedView>
-	);
+      {isLoggingIn ? (
+        <ActivityIndicator size="large" color={tintColor} />
+      ) : (
+        <Button title="Ingresar" onPress={handleLogin} color={tintColor} />
+      )}
+    </ThemedView>
+  );
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		justifyContent: 'center',
-		padding: 24,
-	},
-	card: {
-		backgroundColor: 'rgba(255,255,255,0.02)',
-		borderRadius: 12,
-		padding: 20,
-		shadowColor: '#000',
-		shadowOpacity: 0.05,
-		shadowRadius: 10,
-	},
-	title: {
-		marginBottom: 16,
-	},
-	label: {
-		marginTop: 8,
-		marginBottom: 6,
-	},
-	input: {
-		height: 44,
-		borderWidth: 1,
-		borderColor: '#ddd',
-		borderRadius: 8,
-		paddingHorizontal: 12,
-		marginBottom: 6,
-		color: '#000',
-		backgroundColor: 'transparent',
-	},
-	button: {
-		marginTop: 12,
-		backgroundColor: '#0a84ff',
-		paddingVertical: 12,
-		borderRadius: 8,
-		alignItems: 'center',
-		alignSelf: 'stretch',
-		justifyContent: 'center',
-	},
-	buttonPressed: {
-		opacity: 0.85,
-		transform: [{ scale: 0.997 }],
-	},
-	buttonDisabled: {
-		opacity: 0.6,
-	},
-	buttonText: {
-		color: BUTTON_TEXT_COLOR,
-		fontWeight: '600',
-	},
-	error: {
-		color: '#b00020',
-		marginTop: 6,
-	},
-	row: {
-		flexDirection: 'row',
-		alignItems: 'center',
-	},
-	inputWithButton: {
-		flex: 1,
-		marginRight: 8,
-	},
-	field: {
-		marginBottom: 12,
-	},
-	hint: {
-		fontSize: 12,
-		color: '#6e6e73',
-		marginTop: 8,
-	},
-	eyeButton: {
-		justifyContent: 'center',
-		paddingHorizontal: 6,
-		paddingVertical: 6,
-		borderRadius: 6,
-	},
-	eyeText: {
-		color: '#0a84ff',
-		fontWeight: '600',
-	},
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#687076',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  inputContainer: {
+    width: '100%',
+  },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#ff3b30',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
 });
 
