@@ -1,14 +1,14 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
-import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 export default function Home() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Bienvenido</ThemedText>
-      <ThemedText style={styles.subtitle}>Esta es la vista principal.</ThemedText>
+      <ThemedText type="title">Bienvenido Denuevo!</ThemedText>
+      <ThemedText style={styles.subtitle}>Esta es la vista principal de la aplicacion.</ThemedText>
     </ThemedView>
   );
 }
