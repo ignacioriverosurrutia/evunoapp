@@ -3,12 +3,15 @@ import { StyleSheet } from 'react-native';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { useAuth } from '../context/AuthContext';
 
-export default function Home() {
+export default function Profile() {
+  const { email } = useAuth();
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Bienvenido</ThemedText>
-      <ThemedText style={styles.subtitle}>Esta es la vista principal.</ThemedText>
+      <ThemedText type="title">Perfil</ThemedText>
+      <ThemedText style={styles.subtitle}>Email: {email || 'No disponible'}</ThemedText>
     </ThemedView>
   );
 }
